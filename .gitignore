@@ -90,3 +90,10 @@ ENV/
 
 # joe leftovers
 *~
+
+activate*
+pip*
+easy_*
+python*
+*.config
+youtubedb.json
