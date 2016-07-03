@@ -4,9 +4,11 @@ from pytgbot import Bot
 import json 
 import requests
 import configparser
+import os
 
 config = configparser.ConfigParser()
-config.read('socialstats.config')
+dir = os.path.dirname(sys.argv[0])
+config.read(dir + 'socialstats.config')
 
 BOT_TOKEN = config.get('telegram','BOT_TOKEN')
 CHAT_ID = config.get('telegram','CHAT_ID')
