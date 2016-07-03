@@ -12,9 +12,8 @@ config.read('socialstats.config')
 
 BOT_TOKEN = config.get('telegram','BOT_TOKEN')
 CHAT_ID = config.get('telegram','CHAT_ID')
+dbFilePath = config.get('storage','igdbFilePath')
 
-
-dbFilePath='instagram.json'
 r = requests.get('https://www.instagram.com/alquintopino/')
 p = bs(r.content,"html.parser")
 for script in p.find_all('script'):
@@ -54,7 +53,7 @@ i=0
 message=""
 while i < 5:
     pic=fotos[most_liked_sorted[i][0]]
-    message=message + "La foto '" + ' '.join(pic['caption'][:25].splitlines()) + "'(https://instagram.com/p/"+ most_liked_sorted[i][0] + ") consiguió " + str(most_liked_sorted[i][1]) + " likes desde ayer. Tiene en total " + str(pic['likecount'][-1]['likes']) +".\n"
+    message=message + "La foto '" + ' '.join(pic['caption'][:25].splitlines()) + "...' (https://instagram.com/p/"+ most_liked_sorted[i][0] + ") consiguió " + str(most_liked_sorted[i][1]) + " likes desde ayer. Tiene en total " + str(pic['likecount'][-1]['likes']) +".\n"
     i+=1
 
 bot = Bot(BOT_TOKEN)
