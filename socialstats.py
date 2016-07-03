@@ -5,6 +5,7 @@ import json
 import requests
 import configparser
 import os
+import sys
 
 config = configparser.ConfigParser()
 dir = os.path.dirname(sys.argv[0])
