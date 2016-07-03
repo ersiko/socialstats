@@ -1,0 +1,8 @@
+[telegram]
+BOT_TOKEN = 
+CHAT_ID = 
+[youtube]
+googleapikey = 
+channelid = 
+[storage]
+dbFilePath = 
