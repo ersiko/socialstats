@@ -9,12 +9,13 @@ import configparser
 import os
 
 config = configparser.ConfigParser()
-dir = os.path.dirname(sys.argv[0])
-config.read(dir + 'socialstats.config')
+scriptdir= os.path.dirname(sys.argv[0])
+conffile = scriptdir + '/socialstats.config'
+config.read(conffile)
 
 BOT_TOKEN = config.get('telegram','BOT_TOKEN')
 CHAT_ID = config.get('telegram','CHAT_ID')
-dbFilePath = config.get('storage','igdbFilePath')
+dbFilePath = scriptdir + "/" + config.get('storage','igdbFilePath')
 
 r = requests.get('https://www.instagram.com/alquintopino/')
 p = bs(r.content,"html.parser")

@@ -8,8 +8,9 @@ import os
 import sys
 
 config = configparser.ConfigParser()
-dir = os.path.dirname(sys.argv[0])
-config.read(dir + 'socialstats.config')
+scriptdir= os.path.dirname(sys.argv[0])
+conffile = scriptdir + '/socialstats.config'
+config.read(conffile)
 
 BOT_TOKEN = config.get('telegram','BOT_TOKEN')
 CHAT_ID = config.get('telegram','CHAT_ID')
@@ -19,7 +20,7 @@ googleapikey = config.get ('youtube','googleapikey')
 channelid = config.get ('youtube','channelid')
 
 truncatelimit = 25
-dbFilePath = config.get('storage','ytdbFilePath')
+dbFilePath = scriptdir + "/" + config.get('storage','ytdbFilePath')
 
 url="https://www.googleapis.com/youtube/v3/search?key="+ googleapikey + "&channelId="+channelid+"&part=snippet&order=viewCount&maxResults=6"
 r = requests.get(url)
