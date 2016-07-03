@@ -22,8 +22,10 @@ for script in p.find_all('script'):
 
 #print(json.dumps(data,indent=2))
 
+
 with open(dbFilePath,'r') as dbFile:
     fotos = json.load(dbFile)
+
 
 most_liked={}
 for pic in data['entry_data']['ProfilePage'][0]['user']['media']['nodes']:

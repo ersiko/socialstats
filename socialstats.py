@@ -16,7 +16,7 @@ googleapikey = config.get ('youtube','googleapikey')
 channelid = config.get ('youtube','channelid')
 
 truncatelimit = 25
-dbFilePath = config.get('storage','dbFilePath')
+dbFilePath = config.get('storage','ytdbFilePath')
 
 url="https://www.googleapis.com/youtube/v3/search?key="+ googleapikey + "&channelId="+channelid+"&part=snippet&order=viewCount&maxResults=6"
 r = requests.get(url)
