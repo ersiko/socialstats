@@ -76,8 +76,8 @@ while i < 5:
     video=olddata[most_viewed_sorted[i][0]]
     #print(vid)
     if most_viewed_sorted[i][1] > 0:
-        message=message + "El video '" + video['title'][:truncatelimit] + (video['title'][truncatelimit:] and "...") + \
-                      "' (https://www.youtube.com/watch?v="+ most_viewed_sorted[i][0] + ") fue visto " + str(most_viewed_sorted[i][1]) + \
+        message=message + "El video '[" + video['title'][:truncatelimit] + (video['title'][truncatelimit:] and "...") + \
+                      "](https://www.youtube.com/watch?v="+ most_viewed_sorted[i][0] + ")' fue visto " + str(most_viewed_sorted[i][1]) + \
                       " veces desde ayer. Tiene en total " + video['viewcount'][-1]['views'] +".\n"
     i+=1
 
@@ -85,7 +85,7 @@ if message == "":
     pass
 else:
 #    print(message)
-   bot.send_message(CHAT_ID, message)
+   bot.send_message(CHAT_ID, message, parse_mode='Markdown')
 
 try:
     with open(dbFilePath,'w') as dbFile:
