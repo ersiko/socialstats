@@ -59,16 +59,16 @@ message=""
 while i < 5:
     if most_liked_sorted[i][1] > 0:
         pic=fotos[most_liked_sorted[i][0]]
-        message=message + "La foto '" + ' '.join(pic['caption'][:25].splitlines()) + "...' (https://instagram.com/p/"+ most_liked_sorted[i][0] +   \
-                          ") consiguió " + str(most_liked_sorted[i][1]) + " likes desde ayer. Tiene en total " + str(pic['likecount'][-1]['likes']) +".\n"
+        message=message + "La foto '[" + ' '.join(pic['caption'][:25].splitlines()) + "](https://instagram.com/p/"+ most_liked_sorted[i][0] +   \
+                          ")...' consiguió " + str(most_liked_sorted[i][1]) + " likes desde ayer. Tiene en total " + str(pic['likecount'][-1]['likes']) +".\n"
     i+=1
 
 if message =="":
     pass
 else:
     bot = Bot(BOT_TOKEN)
-    bot.send_message(CHAT_ID, message)
-
+    bot.send_message(CHAT_ID, message, parse_mode='Markdown')
+#    print(message)
 
 #print(json.dumps(fotos,indent=2))
 #    print(''.join(pic['caption'][:25].splitlines()) + ": " + str(pic['likes']['count']))
