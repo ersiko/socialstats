@@ -57,20 +57,19 @@ for video in data['items']:
         if olddata[videoid]['viewcount'][-1]['date'] == now:
              pass
         else:
-            olddata['videoid']['viewcount'].append(daycountobj)
+            olddata[videoid]['viewcount'].append(daycountobj)
         try:
-            most_viewed[videoid] = olddata[videoid]['viewcount'][-1]['likes'] - olddata['picid']['viewcount'][-2]['likes']
+            most_viewed[videoid] = int(olddata[videoid]['viewcount'][-1]['views']) - int(olddata[videoid]['viewcount'][-2]['views'])
         except IndexError:
-            most_viewed[videoid] = olddata[videoid]['viewcount'][-1]['likes']
+            most_viewed[videoid] = int(olddata[videoid]['viewcount'][-1]['views'])
     except KeyError:
 #        print(video['snippet']['description'])
-        olddata[videoid] = {'description' : video['snippet']['description'], 'dateposted' : video['snippet']['publishedAt'], 'viewcount': [daycountobj], 'title': video['snippet']['title'], 'thumbnail': video['snippet']['thumbnails']['high']['url']}
+        olddata[videoid] = {'description' : video['snippet']['description'], 'dateposted' : video['snippet']['publishedAt'], 'viewcount': olddata[videoid]['viewcount'], 'title': video['snippet']['title'], 'thumbnail': video['snippet']['thumbnails']['high']['url']}
         most_viewed[videoid] = int(viewcount)
 
     #message = message + "El video '"+ title[:truncatelimit] + (title[truncatelimit:] and "...") + "' se ha visto "+ views +" veces en total, " + viewsToday + " desde ayer.\n"
 
 most_viewed_sorted = sorted(most_viewed.items(), key=itemgetter(1), reverse=True)
-#print(most_viewed_sorted)
 i=0
 message=""
 while i < 5:
@@ -85,8 +84,8 @@ while i < 5:
 if message == "":
     pass
 else:
-    print(message)
-#   bot.send_message(CHAT_ID, message)
+#    print(message)
+   bot.send_message(CHAT_ID, message)
 
 try:
     with open(dbFilePath,'w') as dbFile:
