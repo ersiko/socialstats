@@ -10,6 +10,8 @@ import os
 
 config = configparser.ConfigParser()
 scriptdir= os.path.dirname(sys.argv[0])
+if scriptdir == "":
+    scriptdir = os.getcwd()
 conffile = scriptdir + '/socialstats.config'
 config.read(conffile)
 
@@ -31,15 +33,16 @@ with open(dbFilePath,'r') as dbFile:
 
 
 most_liked={}
+now = datetime.date.today().strftime('%Y%m%d')
+
 for pic in data['entry_data']['ProfilePage'][0]['user']['media']['nodes']:
     likecount = pic['likes']['count']
     picid = pic['code']
-    now = datetime.date.today().strftime('%Y%m%d')
-    daycountobj = {'data': now, 'likes': likecount}
+    daycountobj = {'date': now, 'likes': likecount}
 #    print(now + " : " + fotos[pic['code']]['likecount'][-1]['data'])
 
     try:
-        if fotos[picid]['likecount'][-1]['data'] == now:
+        if fotos[picid]['likecount'][-1]['date'] == now:
 #            print ("Today we already gathered data")
              pass
         else:
@@ -57,12 +60,16 @@ most_liked_sorted = sorted(most_liked.items(), key=itemgetter(1), reverse=True)
 i=0
 message=""
 while i < 5:
-    pic=fotos[most_liked_sorted[i][0]]
-    message=message + "La foto '" + ' '.join(pic['caption'][:25].splitlines()) + "...' (https://instagram.com/p/"+ most_liked_sorted[i][0] + ") consiguió " + str(most_liked_sorted[i][1]) + " likes desde ayer. Tiene en total " + str(pic['likecount'][-1]['likes']) +".\n"
+    if most_liked_sorted[i][1] > 0:
+        pic=fotos[most_liked_sorted[i][0]]
+        message=message + "La foto '" + ' '.join(pic['caption'][:25].splitlines()) + "...' (https://instagram.com/p/"+ most_liked_sorted[i][0] + ") consiguió " + str(most_liked_sorted[i][1]) + " likes desde ayer. Tiene en total " + str(pic['likecount'][-1]['likes']) +".\n"
     i+=1
 
-bot = Bot(BOT_TOKEN)
-bot.send_message(CHAT_ID, message)
+if message =="":
+    pass
+else:
+    bot = Bot(BOT_TOKEN)
+    bot.send_message(CHAT_ID, message)
 
 
 #print(json.dumps(fotos,indent=2))
@@ -73,5 +80,8 @@ bot.send_message(CHAT_ID, message)
 #    type(pic)
 #    print("La foto '" + pic[1]['caption'] + "'(https://instagram.com/p/"+ pic[0] + ") tiene " + str(pic[1]['viewcount']) + " likes.")
 
+#try:
 with open(dbFilePath,'w') as dbFile:
     json.dump(fotos,dbFile)
+#except:
+#    print ("There was a problem writing the dbfile. Check permissions or disk space.")
