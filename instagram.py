@@ -60,7 +60,7 @@ message="Veamos tus likes desde ayer!\n\n"
 while i < 5:
     if most_liked_sorted[i][1] > 0:
         pic=fotos[most_liked_sorted[i][0]]
-        message=message + "'[" + ' '.join(pic['caption'][:32].splitlines()) + "...](https://instagram.com/p/"+ most_liked_sorted[i][0] +   \
+        message=message + "'[" + ' '.join(pic['caption'][:30].splitlines()) + "...](https://instagram.com/p/"+ most_liked_sorted[i][0] +   \
                           ")' ganó *" + str(most_liked_sorted[i][1]) + "* likes (en total *" + str(pic['likecount'][-1]['likes']) +"*)\n\n"
     else:
         break
