@@ -19,6 +19,7 @@ BOT_TOKEN = config.get('telegram','BOT_TOKEN')
 CHAT_ID = config.get('telegram','CHAT_ID')
 dbFilePath = scriptdir + "/" + config.get('storage','igdbFilePath')
 
+
 r = requests.get('https://www.instagram.com/alquintopino/')
 p = bs(r.content,"html.parser")
 for script in p.find_all('script'):
@@ -55,15 +56,17 @@ for pic in data['entry_data']['ProfilePage'][0]['user']['media']['nodes']:
 
 most_liked_sorted = sorted(most_liked.items(), key=itemgetter(1), reverse=True)
 i=0
-message=""
+message="Veamos tus likes desde ayer!\n\n"
 while i < 5:
     if most_liked_sorted[i][1] > 0:
         pic=fotos[most_liked_sorted[i][0]]
-        message=message + "La foto '[" + ' '.join(pic['caption'][:25].splitlines()) + "](https://instagram.com/p/"+ most_liked_sorted[i][0] +   \
-                          ")...' consiguió " + str(most_liked_sorted[i][1]) + " likes desde ayer. Tiene en total " + str(pic['likecount'][-1]['likes']) +".\n"
+        message=message + "'[" + ' '.join(pic['caption'][:32].splitlines()) + "...](https://instagram.com/p/"+ most_liked_sorted[i][0] +   \
+                          ")' ganó *" + str(most_liked_sorted[i][1]) + "* likes (en total *" + str(pic['likecount'][-1]['likes']) +"*)\n\n"
+    else:
+        break
     i+=1
 
-if message =="":
+if i==0:
     pass
 else:
     bot = Bot(BOT_TOKEN)
