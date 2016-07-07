@@ -51,14 +51,16 @@ for pic in data['entry_data']['ProfilePage'][0]['user']['media']['nodes']:
         except IndexError:
             most_liked[picid] = fotos[picid]['likecount'][-1]['likes']
     except KeyError:
-        fotos[picid] = {'caption' : pic['caption'], 'dateposted' : pic['date'], 'likecount': fotos[picid]['likecount'], 'fullpic': pic['display_src'], 'thumbnail': pic['thumbnail_src']}
+        fotos[picid] = {'caption' : pic['caption'], 'dateposted' : pic['date'], 'likecount': [daycountobj], 'fullpic': pic['display_src'], 'thumbnail': pic['thumbnail_src']}
         most_liked[picid] = likecount
 
 most_liked_sorted = sorted(most_liked.items(), key=itemgetter(1), reverse=True)
 i=0
 message="Veamos tus likes desde ayer!\n\n"
+
 while i < 5:
     if most_liked_sorted[i][1] > 0:
+
         pic=fotos[most_liked_sorted[i][0]]
         message=message + "'[" + ' '.join(pic['caption'][:30].splitlines()) + "...](https://instagram.com/p/"+ most_liked_sorted[i][0] +   \
                           ")' ganó *" + str(most_liked_sorted[i][1]) + "* likes (en total *" + str(pic['likecount'][-1]['likes']) +"*)\n\n"
@@ -81,8 +83,8 @@ else:
 #    type(pic)
 #    print("La foto '" + pic[1]['caption'] + "'(https://instagram.com/p/"+ pic[0] + ") tiene " + str(pic[1]['viewcount']) + " likes.")
 
-try:
-    with open(dbFilePath,'w') as dbFile:
-        json.dump(fotos,dbFile)
-except:
-    print ("There was a problem writing the dbfile. Check permissions or disk space.")
+#try:
+#    with open(dbFilePath,'w') as dbFile:
+#        json.dump(fotos,dbFile)
+#except:
+ #   print ("There was a problem writing the dbfile. Check permissions or disk space.")
