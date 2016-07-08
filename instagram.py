@@ -69,14 +69,21 @@ for iguser, telegram_id in igusers:
             likecountobj = {'date': now, 'likes': pic['likes']['count']}
             try:
                 if pics[picid]['likecount'][-1]['date'] == now:
+#                    print("Hoy ya está procesado")
                     pass
                 else:
-                    pics[picid]['likecount'].append(likecountobj)        
-                if len(pics[picid]['likecount']) < 1:
-                    like_list[picid] = pics[picid]['likecount'][-1]['likes'] - pics['likecount'][-2]['likes']
+#                    print("Voy a añadirle " + now)
+                    pics[picid]['likecount'].append(likecountobj)     
+#                print(json.dumps(pics[picid]['likecount']))   
+#                print("Tenemos " + str(len(pics[picid]['likecount'])))
+                if len(pics[picid]['likecount']) > 1:
+#                    print("caca")
+                    like_list[picid] = pics[picid]['likecount'][-1]['likes'] - pics[picid]['likecount'][-2]['likes']
                 else:
+#                    print("culo")
                     like_list[picid] = pics[picid]['likecount'][-1]['likes']
             except KeyError:
+#                print("yo pasaba por aqui...")
                 pics[picid] = {'caption' : pic['caption'], 'dateposted' : pic['date'], 'likecount': [likecountobj], 'fullpic': pic['display_src'], 'thumbnail': pic['thumbnail_src']}
                 like_list[picid] = likecountobj['likes']
         if data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['has_next_page'] == True:
@@ -89,17 +96,31 @@ for iguser, telegram_id in igusers:
         time.sleep(1)
 #    print(" ")
 #    print("Vamos por la iteración numero " + str(cursor))
+    
+    if len(fotos[iguser]['followed_by']) == 0:
+        followedcountobj = {'date': now, 'count': data['entry_data']['ProfilePage'][0]['user']['followed_by']['count']}
+        fotos[iguser]['followed_by'].append(followedcountobj)
+    if fotos[iguser]['followed_by'][-1]['date'] == now:
+            pass
+    else:
+        followedcountobj = {'date': now, 'count': data['entry_data']['ProfilePage'][0]['user']['followed_by']['count']}
+        fotos[iguser]['followed_by'].append(followedcountobj)
 
-    followedcountobj = {'date': now, 'likes': data['entry_data']['ProfilePage'][0]['user']['followed_by']['count']}
-    followscountobj = {'date': now, 'likes': data['entry_data']['ProfilePage'][0]['user']['follows']['count']}
-    fotos[iguser]['followed_by'].append(followedcountobj)
-    fotos[iguser]['follows'].append(followscountobj)
+    if len(fotos[iguser]['follows']) == 0:
+        followscountobj = {'date': now, 'count': data['entry_data']['ProfilePage'][0]['user']['follows']['count']}
+        fotos[iguser]['follows'].append(followscountobj)
+    if fotos[iguser]['follows'][-1]['date'] == now:
+        pass
+    else:
+        followscountobj = {'date': now, 'count': data['entry_data']['ProfilePage'][0]['user']['follows']['count']}
+        fotos[iguser]['follows'].append(followscountobj)
+
     fotos[iguser]['pics'] = pics
 
     most_liked = sorted(like_list.items(), key=itemgetter(1), reverse=True)
 
     i=0
-    message="Veamos tus likes desde ayer!\n\n"
+    message=""
 
     while i < 5 and i < len(most_liked):
         if most_liked[i][1] > 0:
@@ -110,12 +131,28 @@ for iguser, telegram_id in igusers:
             break
         i+=1
 
-    if i==0: 
-        pass
+    if i!=0: 
+        message = "Veamos tus likes desde ayer!\n\n" + message
+
+    if len(fotos[iguser]['follows']) > 1:
+        follows_diff = fotos[iguser]['follows'][-1]['count'] - fotos[iguser]['follows'][-2]['count']
     else:
+        follows_diff = 0
+
+    if len(fotos[iguser]['followed_by']) > 1:
+        followed_diff = fotos[iguser]['followed_by'][-1]['count'] - fotos[iguser]['followed_by'][-2]['count']
+    else:
+        followed_diff = 0
+
+    if followed_diff != 0 or follows_diff != 0:
+        message = message + "Diferencia de seguidores: " + str(followed_diff) + ". Diferencia de seguidos: " + str(follows_diff)
+
+    if message != "":
 #        print('escribiendo al canal'+fotos[iguser]['telegram_id'])
         bot.send_message(fotos[iguser]['telegram_id'], message, parse_mode='Markdown')
-#    print(message)
+#        print(message)
+
+
 try:
 #    os.rename(dbFilePath,dbFilePath+","+str(int(time.time())))
     with open(dbFilePath,'w') as dbFile:
