@@ -20,7 +20,7 @@ BOT_TOKEN = config.get('telegram','BOT_TOKEN')
 CHAT_ID = config.get('telegram','CHAT_ID')
 dbFilePath = scriptdir + "/" + config.get('storage','igdbFilePath')
 
-
+bot = Bot(BOT_TOKEN)
 
 #print(json.dumps(data,indent=2))
 
@@ -31,76 +31,99 @@ except FileNotFoundError:
     print("Db file not found, we may be running for the first time. We'll create a new dbfile")
     fotos = {}
 
-like_list={}
 now = datetime.date.today().strftime('%Y%m%d')
-limit=5
-cursor=0
-max_id=""
-iguser = 'alquintopino'
+limit=1
 
-while cursor < limit:
+
+#iguser = 'alquintopino'
+
+#fotos={}
+for iguser in igusers:
+
+    cursor=0
+    max_id=""
+    like_list={}
+    try:
+        pics=fotos[iguser]['pics']
+    except KeyError:
+        reply=input("El usuario" + iguser + " no existe. Quieres crearlo nuevo? (s/N) ")
+        if reply != "s":
+            continue
+        fotos[iguser]['telegram_id']=input("Ok, creando el usuario. Cual es su ID de telegram? ")
+        fotos[iguser]['pics']={}
+        fotos[iguser]['followedby']=[]
+        fotos[iguser]['follows']=[]
+        pics={}
+    while cursor < limit:
 #    print(data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['end_cursor'])
-    r = requests.get('https://www.instagram.com/'+ iguser +'/'+max_id)
-    p = bs(r.content,"html.parser")
-    for script in p.find_all('script'):
-        if 'window._sharedData' in script.text:
-            data=json.loads(script.text[20:-1])
-    if data['entry_data']['ProfilePage'][0]['user']['is_private'] == True:
-        print("This account is private, I have no access to its data")
-        sys.exit(0)
-    for pic in data['entry_data']['ProfilePage'][0]['user']['media']['nodes']:
-        picid = pic['code']
-        likecountobj = {'date': now, 'likes': pic['likes']['count']}
-        try:
-            if fotos[picid]['likecount'][-1]['date'] == now:
-                pass
-            else:
-                fotos[picid]['likecount'].append(likecountobj)        
-            if len(fotos[picid]['likecount']) < 1:
-                like_list[picid] = fotos[picid]['likecount'][-1]['likes'] - fotos[picid]['likecount'][-2]['likes']
-            else:
-                like_list[picid] = fotos[picid]['likecount'][-1]['likes']
-        except KeyError:
-            fotos[picid] = {'caption' : pic['caption'], 'dateposted' : pic['date'], 'likecount': [likecountobj], 'fullpic': pic['display_src'], 'thumbnail': pic['thumbnail_src']}
-            like_list[picid] = likecountobj['likes']
-    if data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['has_next_page'] == True:
-        max_id = "?max_id=" +data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['end_cursor']
-        cursor+=1
-    else:
-        #print("No has máy fotos!")
-        break
+        r = requests.get('https://www.instagram.com/'+ iguser +'/'+max_id)
+        p = bs(r.content,"html.parser")
+        for script in p.find_all('script'):
+            if 'window._sharedData' in script.text:
+                data=json.loads(script.text[20:-1])
+        if data['entry_data']['ProfilePage'][0]['user']['is_private'] == True:
+            print("This account is private, I have no access to its data")
+            sys.exit(0)
+        for pic in data['entry_data']['ProfilePage'][0]['user']['media']['nodes']:
+            picid = pic['code']
+            likecountobj = {'date': now, 'likes': pic['likes']['count']}
+            try:
+                if pics[picid]['likecount'][-1]['date'] == now:
+                    pass
+                else:
+                    pics[picid]['likecount'].append(likecountobj)        
+                if len(pics[picid]['likecount']) < 1:
+                    like_list[picid] = pics[picid]['likecount'][-1]['likes'] - pics['likecount'][-2]['likes']
+                else:
+                    like_list[picid] = pics[picid]['likecount'][-1]['likes']
+            except KeyError:
+                pics[picid] = {'caption' : pic['caption'], 'dateposted' : pic['date'], 'likecount': [likecountobj], 'fullpic': pic['display_src'], 'thumbnail': pic['thumbnail_src']}
+                like_list[picid] = likecountobj['likes']
+        if data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['has_next_page'] == True:
+            max_id = "?max_id=" +data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['end_cursor']
+            cursor+=1
+        else:
+        #print("No has máy fotos[iguser]!")
+            break
 #    print(cursor,data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['end_cursor'] )
-    time.sleep(1)
+        time.sleep(1)
 #    print(" ")
 #    print("Vamos por la iteración numero " + str(cursor))
 
-most_liked = sorted(like_list.items(), key=itemgetter(1), reverse=True)
+    followedcountobj = {'date': now, 'likes': data['entry_data']['ProfilePage'][0]['user']['followed_by']['count']}
+    followscountobj = {'date': now, 'likes': data['entry_data']['ProfilePage'][0]['user']['follows']['count']}
+    fotos[iguser]['followed_by'].append(followedcountobj)
+    fotos[iguser]['follows'].append(followscountobj)
+    fotos[iguser]['pics'] = pics, 
 
-i=0
-message="Veamos tus likes desde ayer!\n\n"
+    most_liked = sorted(like_list.items(), key=itemgetter(1), reverse=True)
 
-while i < 5:
-    if most_liked[i][1] > 0:
+    i=0
+    message="Veamos tus likes desde ayer!\n\n"
 
-        pic=fotos[most_liked[i][0]]
-        message=message + "'[" + ' '.join(pic['caption'][:30].splitlines()) + "...](https://instagram.com/p/"+ most_liked[i][0] +   \
-                          ")' ganó *" + str(most_liked[i][1]) + "* likes (en total *" + str(pic['likecount'][-1]['likes']) +"*)\n\n"
+    while i < 5:
+        if most_liked[i][1] > 0:
+            pic=pics[most_liked[i][0]]
+            message=message + "'[" + ' '.join(pic['caption'][:30].splitlines()) + "...](https://instagram.com/p/"+ most_liked[i][0] +   \
+                              ")' ganó *" + str(most_liked[i][1]) + "* likes (en total *" + str(pic['likecount'][-1]['likes']) +"*)\n\n"
+        else:
+            break
+        i+=1
+
+    if i==0: 
+        pass
     else:
-        break
-    i+=1
-
-if i==0:
-    pass
-else:
-    bot = Bot(BOT_TOKEN)
-    bot.send_message(CHAT_ID, message, parse_mode='Markdown')
+        print('escribiendo al canal'+fotos[iguser]['telegram_id'])
+        bot.send_message(fotos[iguser]['telegram_id'], message, parse_mode='Markdown')
 #    print(message)
 
 try:
-    os.rename(dbFilePath,dbFilePath+","+str(int(time.time())))
+#    os.rename(dbFilePath,dbFilePath+","+str(int(time.time())))
     with open(dbFilePath,'w') as dbFile:
         json.dump(fotos,dbFile)
 except:
     print ("There was a problem writing the dbfile. Check permissions or disk space.")
 
  
+ 
+
