@@ -8,6 +8,7 @@ from pytgbot import Bot
 import configparser
 import os
 import time
+import types
 
 config = configparser.ConfigParser()
 scriptdir= os.path.dirname(sys.argv[0])
@@ -18,6 +19,7 @@ config.read(conffile)
 
 BOT_TOKEN = config.get('telegram','BOT_TOKEN')
 CHAT_ID = config.get('telegram','CHAT_ID')
+igusers = config.items('instagram')
 dbFilePath = scriptdir + "/" + config.get('storage','igdbFilePath')
 
 bot = Bot(BOT_TOKEN)
@@ -34,11 +36,10 @@ except FileNotFoundError:
 now = datetime.date.today().strftime('%Y%m%d')
 limit=1
 
-
 #iguser = 'alquintopino'
 
 #fotos={}
-for iguser in igusers:
+for iguser, telegram_id in igusers:
 
     cursor=0
     max_id=""
@@ -46,13 +47,12 @@ for iguser in igusers:
     try:
         pics=fotos[iguser]['pics']
     except KeyError:
-        reply=input("El usuario" + iguser + " no existe. Quieres crearlo nuevo? (s/N) ")
-        if reply != "s":
-            continue
-        fotos[iguser]['telegram_id']=input("Ok, creando el usuario. Cual es su ID de telegram? ")
+        fotos[iguser]={}
+        fotos[iguser]['telegram_id']=telegram_id
         fotos[iguser]['pics']={}
-        fotos[iguser]['followedby']=[]
+        fotos[iguser]['followed_by']=[]
         fotos[iguser]['follows']=[]
+        fotos[iguser]['private']=False
         pics={}
     while cursor < limit:
 #    print(data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['end_cursor'])
@@ -63,7 +63,7 @@ for iguser in igusers:
                 data=json.loads(script.text[20:-1])
         if data['entry_data']['ProfilePage'][0]['user']['is_private'] == True:
             print("This account is private, I have no access to its data")
-            sys.exit(0)
+            break
         for pic in data['entry_data']['ProfilePage'][0]['user']['media']['nodes']:
             picid = pic['code']
             likecountobj = {'date': now, 'likes': pic['likes']['count']}
@@ -94,14 +94,14 @@ for iguser in igusers:
     followscountobj = {'date': now, 'likes': data['entry_data']['ProfilePage'][0]['user']['follows']['count']}
     fotos[iguser]['followed_by'].append(followedcountobj)
     fotos[iguser]['follows'].append(followscountobj)
-    fotos[iguser]['pics'] = pics, 
+    fotos[iguser]['pics'] = pics
 
     most_liked = sorted(like_list.items(), key=itemgetter(1), reverse=True)
 
     i=0
     message="Veamos tus likes desde ayer!\n\n"
 
-    while i < 5:
+    while i < 5 and i < len(most_liked):
         if most_liked[i][1] > 0:
             pic=pics[most_liked[i][0]]
             message=message + "'[" + ' '.join(pic['caption'][:30].splitlines()) + "...](https://instagram.com/p/"+ most_liked[i][0] +   \
@@ -113,10 +113,9 @@ for iguser in igusers:
     if i==0: 
         pass
     else:
-        print('escribiendo al canal'+fotos[iguser]['telegram_id'])
+#        print('escribiendo al canal'+fotos[iguser]['telegram_id'])
         bot.send_message(fotos[iguser]['telegram_id'], message, parse_mode='Markdown')
 #    print(message)
-
 try:
 #    os.rename(dbFilePath,dbFilePath+","+str(int(time.time())))
     with open(dbFilePath,'w') as dbFile:
