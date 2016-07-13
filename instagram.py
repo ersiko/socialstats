@@ -24,8 +24,6 @@ dbFilePath = scriptdir + "/" + config.get('storage','igdbFilePath')
 
 bot = Bot(BOT_TOKEN)
 
-#print(json.dumps(data,indent=2))
-
 try:
     with open(dbFilePath,'r') as dbFile:
         fotos = json.load(dbFile)
@@ -36,9 +34,6 @@ except FileNotFoundError:
 now = datetime.date.today().strftime('%Y%m%d')
 limit=1
 
-#iguser = 'alquintopino'
-
-#fotos={}
 for iguser, telegram_id in igusers:
 
     cursor=0
@@ -55,7 +50,6 @@ for iguser, telegram_id in igusers:
         fotos[iguser]['private']=False
         pics={}
     while cursor < limit:
-#    print(data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['end_cursor'])
         r = requests.get('https://www.instagram.com/'+ iguser +'/'+max_id)
         p = bs(r.content,"html.parser")
         for script in p.find_all('script'):
@@ -69,21 +63,14 @@ for iguser, telegram_id in igusers:
             likecountobj = {'date': now, 'likes': pic['likes']['count']}
             try:
                 if pics[picid]['likecount'][-1]['date'] == now:
-#                    print("Hoy ya está procesado")
                     pass
                 else:
-#                    print("Voy a añadirle " + now)
-                    pics[picid]['likecount'].append(likecountobj)     
-#                print(json.dumps(pics[picid]['likecount']))   
-#                print("Tenemos " + str(len(pics[picid]['likecount'])))
+                    pics[picid]['likecount'].append(likecountobj)
                 if len(pics[picid]['likecount']) > 1:
-#                    print("caca")
                     like_list[picid] = pics[picid]['likecount'][-1]['likes'] - pics[picid]['likecount'][-2]['likes']
                 else:
-#                    print("culo")
                     like_list[picid] = pics[picid]['likecount'][-1]['likes']
             except KeyError:
-#                print("yo pasaba por aqui...")
                 pics[picid] = {'caption' : pic['caption'], 'dateposted' : pic['date'], 'likecount': [likecountobj], 'fullpic': pic['display_src'], 'thumbnail': pic['thumbnail_src']}
                 like_list[picid] = likecountobj['likes']
         if data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['has_next_page'] == True:
@@ -96,7 +83,7 @@ for iguser, telegram_id in igusers:
         time.sleep(1)
 #    print(" ")
 #    print("Vamos por la iteración numero " + str(cursor))
-    
+
     if len(fotos[iguser]['followed_by']) == 0:
         followedcountobj = {'date': now, 'count': data['entry_data']['ProfilePage'][0]['user']['followed_by']['count']}
         fotos[iguser]['followed_by'].append(followedcountobj)
@@ -131,7 +118,7 @@ for iguser, telegram_id in igusers:
             break
         i+=1
 
-    if i!=0: 
+    if i!=0:
         message = "Veamos tus likes desde ayer!\n\n" + message
 
     if len(fotos[iguser]['follows']) > 1:
@@ -150,6 +137,7 @@ for iguser, telegram_id in igusers:
     if message != "":
 #        print('escribiendo al canal'+fotos[iguser]['telegram_id'])
         bot.send_message(fotos[iguser]['telegram_id'], message, parse_mode='Markdown')
+        bot.send_message(CHAT_ID, message, parse_mode='Markdown')
 #        print(message)
 
 
@@ -159,7 +147,3 @@ try:
         json.dump(fotos,dbFile)
 except:
     print ("There was a problem writing the dbfile. Check permissions or disk space.")
-
- 
- 
-
