@@ -43,7 +43,7 @@ ourusers_settings = {
                 "monthly": {
                     "type": "boolean"
                 },
-                "subscribed_to" {
+                "subscribed_to": {
                     "type": "string"
                 }
             }
@@ -60,19 +60,19 @@ pics_settings = {
     "mappings": {
         "pics": {
             "properties": {
-                "username" {
+                "username": {
                     "type": "string"
                 },
-                "dateposted" {
+                "dateposted": {
                     "type": "date"
                 },
-                "thumbnail" {
+                "thumbnail": {
                     "type": "string"
                 },
-                "fullpic" {
+                "fullpic": {
                     "type": "string"
                 },
-                "caption" {
+                "caption": {
                     "type": "string"
                 }
             }
@@ -87,15 +87,19 @@ userdaily_settings = {
     },
     "mappings": {
         "followers": {
-            "type": "integer"
+            "properties": {
+                "type": "integer"
+            }
         },
         "following": {
-            "type": "integer"
+            "properties": {
+                "type": "integer"
+            }
         }
     }
 }
 
-es.indices.create(index "userdaily", body = userdaily_settings)
+es.indices.create(index = "userdaily", body = userdaily_settings)
 
 picsdaily_settings = {
     "settings" : {
@@ -103,10 +107,11 @@ picsdaily_settings = {
     },
     "mappings": {
         "likes": {
-            "type": "integer"
+            "properties": {
+                "type": "integer"
             }
         }
     }
 }
 
-es.indices.create(index "picsdaily", body = picsdaily_settings)
+es.indices.create(index = "picsdaily", body = picsdaily_settings)
