@@ -43,7 +43,70 @@ ourusers_settings = {
                 "monthly": {
                     "type": "boolean"
                 },
+                "subscribed_to" {
+                    "type": "string"
+                }
             }
         }
     }
 }
+
+es.indices.create(index = "ourusers", body = ourusers_settings)
+
+pics_settings = {
+    "settings" : {
+        "number_of_replicas": 0
+    },
+    "mappings": {
+        "pics": {
+            "properties": {
+                "username" {
+                    "type": "string"
+                },
+                "dateposted" {
+                    "type": "date"
+                },
+                "thumbnail" {
+                    "type": "string"
+                },
+                "fullpic" {
+                    "type": "string"
+                },
+                "caption" {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
+es.indices.create(index ="pics", body =pics_settings)
+ 
+userdaily_settings = {
+   "settings" : {
+        "number_of_replicas": 0
+    },
+    "mappings": {
+        "followers": {
+            "type": "integer"
+        },
+        "following": {
+            "type": "integer"
+        }
+    }
+}
+
+es.indices.create(index "userdaily", body = userdaily_settings)
+
+picsdaily_settings = {
+    "settings" : {
+        "number_of_replicas": 0
+    },
+    "mappings": {
+        "likes": {
+            "type": "integer"
+            }
+        }
+    }
+}
+
+es.indices.create(index "picsdaily", body = picsdaily_settings)
