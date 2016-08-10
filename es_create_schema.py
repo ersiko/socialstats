@@ -88,12 +88,16 @@ userdaily_settings = {
     "mappings": {
         "followers": {
             "properties": {
-                "type": "integer"
+                "number": {
+                    "type": "integer"
+                }
             }
         },
         "following": {
             "properties": {
-                "type": "integer"
+                "number": {
+                    "type": "integer"
+                }
             }
         }
     }
@@ -108,7 +112,9 @@ picsdaily_settings = {
     "mappings": {
         "likes": {
             "properties": {
-                "type": "integer"
+                "number": {
+                    "type": "integer"
+                }
             }
         }
     }
