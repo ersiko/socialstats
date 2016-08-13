@@ -15,6 +15,57 @@ igusers_settings = {
                 "followers": {
                     "type": "string"
                 }
+
+            }
+        },
+        "followers_diffs": {
+            "properties": {
+                "1": {
+                    "type": "integer"
+                },
+                "3": {
+                    "type": "integer"
+                },
+                "7": {
+                    "type": "integer"
+                },
+                "30": {
+                    "type": "integer"
+                },
+                "90": {
+                    "type": "integer"
+                },
+                "180": {
+                    "type": "integer"
+                },
+                "365": {
+                    "type": "integer"
+                }
+            }
+        },
+        "following_diffs": {
+            "properties": {
+                "1": {
+                    "type": "integer"
+                },
+                "3": {
+                    "type": "integer"
+                },
+                "7": {
+                    "type": "integer"
+                },
+                "30": {
+                    "type": "integer"
+                },
+                "90": {
+                    "type": "integer"
+                },
+                "180": {
+                    "type": "integer"
+                },
+                "365": {
+                    "type": "integer"
+                }
             }
         }
     }
@@ -76,26 +127,49 @@ pics_settings = {
                     "type": "string"
                 }
             }
+        },
+        "likes_diffs": {
+            "properties": {
+                "1": {
+                    "type": "integer"
+                },
+                "3": {
+                    "type": "integer"
+                },
+                "7": {
+                    "type": "integer"
+                },
+                "30": {
+                    "type": "integer"
+                },
+                "90": {
+                    "type": "integer"
+                },
+                "180": {
+                    "type": "integer"
+                },
+                "365": {
+                    "type": "integer"
+                }
+            }
         }
+
     }
 }
-es.indices.create(index ="pics", body =pics_settings)
- 
+es.indices.create(index ="pics", body=pics_settings)
+
 userdaily_settings = {
-   "settings" : {
+    "template": "userdaily-*",
+    "settings" : {
         "number_of_replicas": 0
     },
     "mappings": {
-        "followers": {
+        "follows": {
             "properties": {
-                "number": {
+                "followers": {
                     "type": "integer"
-                }
-            }
-        },
-        "following": {
-            "properties": {
-                "number": {
+                },
+                "following": {
                     "type": "integer"
                 }
             }
@@ -103,9 +177,10 @@ userdaily_settings = {
     }
 }
 
-es.indices.create(index = "userdaily", body = userdaily_settings)
+es.indices.put_template("userdaily", body = userdaily_settings)
 
 picsdaily_settings = {
+    "template": "picsdaily-*",
     "settings" : {
         "number_of_replicas": 0
     },
@@ -120,4 +195,4 @@ picsdaily_settings = {
     }
 }
 
-es.indices.create(index = "picsdaily", body = picsdaily_settings)
+es.indices.put_template("picsdaily", body = picsdaily_settings)
