@@ -27,6 +27,7 @@ timestamp_today = date.today().strftime("%s")+"000"
 timestamp_yesterday = (date.today()-timedelta(days=1)).strftime("%s")+"000"
 
 for iguser in res['hits']['hits']:
+    print(iguser['_id'])
     dont_bother_trying_to_add_the_rest_of_likediffs = False
     dont_bother_trying_to_add_the_rest_of_likes = False
     dont_bother_trying_to_add_the_rest_of_pics = False
@@ -38,7 +39,7 @@ for iguser in res['hits']['hits']:
 #    following_diff={}
 #    followers_diff={}
     #print("es.index(index='userdaily-'" +index_suffix+",doc_type='follows', id="+igusername+",body={'followers':"+str(followers)+", 'following': "+str(following)+"})")
-    es.index(index='userdaily-' +index_suffix_today,doc_type='follows', id=igusername,body={'followers':followers, 'following': following})
+    es.index(index='userdaily-'+index_suffix_today,doc_type='follows', id=igusername,body={'followers':followers, 'following': following, 'timestamp': timestamp_today})
 #    oldvalue={'following': following, 'followers': followers}
 #    oldest_index_found = False
 #    for diff_days in [1,3,7,30,90,180,365]:
@@ -83,6 +84,8 @@ for iguser in res['hits']['hits']:
                 es.index(index='picsdaily-' +index_suffix_yesterday,doc_type='likes', id=pic_id,body={'number':0, 'timestamp': timestamp_yesterday})
             else: 
                 print("Es una foto antigua que se acaba de importar. Dejo los likes anteriores como 'indeterminados'")
+            es.index(index='picsdaily-' +index_suffix_today,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_today})
+
         else:
             print("La foto " + pic_id + " ya está en elasticsearch")
         #    dont_bother_trying_to_add_the_rest_of_pics = True
@@ -92,12 +95,18 @@ for iguser in res['hits']['hits']:
         #else:  
         #if update['_shards']['successful'] == 0:
         #    print("Algo ha pasado y no he podido actualizar los likes")
-        days=0
-        while not es.exists(index="picsdaily-"+index_suffix_today, doc_type='likes', id=pic_id):
-            print("Le pongo " + str(likes) + " likes a la foto " + str(pic_id))
-            result = es.index(index='picsdaily-' +index_suffix_today,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_today})
+            days=0
             index_daily=(date.today()-timedelta(days=days)).strftime("%Y%m%d")
-            days+=1
+            if es.search(index="picsdaily-*", doc_type='likes', q="_id:"+pic_id, size=0)['hits']['total'] == 0:
+                result = es.index(index='picsdaily-' +index_daily,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_daily})
+            else: 
+                while not es.exists(index="picsdaily-"+index_daily, doc_type='likes', id=pic_id):
+                    timestamp_daily = (date.today()-timedelta(days=days)).strftime("%s")+"000"
+                    print("Dias = "+str(days)+" . Le pongo " + str(likes) + " likes a la foto " + str(pic_id))
+                    result = es.index(index='picsdaily-' +index_daily,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_daily})
+                    days+=1
+                    index_daily=(date.today()-timedelta(days=days)).strftime("%Y%m%d")
+
 
 #            likes_diff={}
 #            oldvalue=likes

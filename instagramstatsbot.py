@@ -5,6 +5,7 @@ import telepot
 import json
 import elasticsearch
 import igscrape
+import datetime
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardHide, ForceReply
 from telepot.delegate import per_chat_id, create_open
 
@@ -14,16 +15,75 @@ if scriptdir == "":
     scriptdir = os.getcwd()
 conffile = scriptdir + '/socialstats.config'
 config.read(conffile)
+es_server = config.get('elasticsearch','server')
+
+es = elasticsearch.Elasticsearch([es_server])
 
 BOT_TOKEN = config.get('telegram','BOT_TOKEN')
-es = elasticsearch.Elasticsearch(['10.8.0.1'])
 
 class InstagramStatsBot(telepot.helper.ChatHandler):
     def __init__(self, seed_tuple, timeout):
         super(InstagramStatsBot, self).__init__(seed_tuple, timeout)
-        
+    
+    def show_current_settings(self, id):
+        res = es.get(index="ourusers", doc_type="users", id=id)
+        message = "Lo que se de ti es:\n"
+        message = message + "Te llamas " + res['_source']['first_name'] + "\n"
+        message = message + "Tu nombre en Telegram es " + res['_source']['username'] + "\n"
+        message = message + "Estas suscrito a "+ str(len(res['_source']['subscribed_to'])) +" usuarios: "
+        for subscription in res['_source']['subscribed_to']:
+            message = message + subscription + " "
+        message = message + "\n"
+        self.sender.sendMessage(message)
+        self.show_current_regularity(id)
+        self.show_last_notified(id)
+
+    def show_last_notified(self, id):
+        res = es.get(index="ourusers", doc_type="last_updated", id=id)
+        message = "La última vez que recibiste un mensaje fue:\n"
+        for regularity in ['1','3','7','30','90','180','365']:
+            timestamp = int(res['_source']['date'+regularity])/1000
+            last_updated = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
+            days_ago = datetime.datetime.now() - datetime.datetime.fromtimestamp(timestamp)
+            message = message + "El mensaje de los " + regularity + " dias lo recibiste hace " + str(days_ago.days) + " días, el " + last_updated + "\n"
+        self.sender.sendMessage(message)
+
+    def show_current_regularity(self, id):
+        res = es.get(index="ourusers", doc_type="users", id=id)
+        message = "Frecuencia de los mensajes. Vas a recibir mensajes:\n"
+        for regularity in [1,3,7,30,90,180,365]:
+            message = message + "Cada " + str(regularity) + " días: "
+            if res['_source'][str(regularity)]:
+                message = message + "si\n"
+            else:
+                message = message + "no\n"
+        self.sender.sendMessage(message)
+    def show_regularity_toggle_keyboard(self):
+        self.sender.sendMessage("Hay alguno de estos valores que quieras cambiar?", reply_markup=ReplyKeyboardMarkup( keyboard=[
+                             [KeyboardButton(text="1"), KeyboardButton(text="3"),KeyboardButton(text="7"),KeyboardButton(text="30")],
+                             [KeyboardButton(text="90"), KeyboardButton(text="180"),KeyboardButton(text="365")],
+                             [KeyboardButton(text="No quiero cambiar ninguno, están todos bien")]
+                                       ], one_time_keyboard=True))
+
+    def set_regularity(self, id):
+        self.show_current_regularity(id)
+        self.show_regularity_toggle_keyboard()
+
+    def change_regularity(self, regularity, id):
+        res = es.get(index="ourusers", doc_type="users", id=id)
+        if res['_source'][str(regularity)]:
+            message = "Deshabilitando mensajes cada " + str(regularity) + " días"
+            res['_source'][str(regularity)] = False
+        else:
+            message = "Habilitando mensajes cada " + str(regularity) + " días"
+            res['_source'][str(regularity)] = True
+        es.index(index="ourusers", doc_type="users", id=id, body=res['_source'])
+        self.sender.sendMessage(message)
+        self.show_current_regularity(id)
+        self.show_regularity_toggle_keyboard()
+
     def user_subscription(self, iguser, telegram_id):
-        self.sender.sendMessage('suscribiendo ... iguser' + iguser + " y tgid " + str(telegram_id)) 
+        #self.sender.sendMessage('suscribiendo ... iguser' + iguser + " y tgid " + str(telegram_id)) 
         self.add_iguser(iguser)
 
         if es.exists(index="ourusers", doc_type="users", id=telegram_id):
@@ -35,12 +95,15 @@ class InstagramStatsBot(telepot.helper.ChatHandler):
         if iguser not in subscribed_to:
             subscribed_to.append(iguser)
             res = es.update(index="ourusers", doc_type="users", id=telegram_id, body={'doc' :{'subscribed_to': subscribed_to}})
-            print(str(res))
+            self.sender.sendMessage('Ok, ahora recibirás estadísticas del usuario ' + iguser)
         else:
             self.sender.sendMessage('Ya estás suscrito a ' + iguser)
 
     def user_creation(self,msg):
-        res = es.index(index="ourusers", doc_type="users", id=msg['id'], body={'username': msg['username'], 'first_name': msg['first_name'], 'subscribed_to': [] })
+        res = es.index(index="ourusers", doc_type="users", id=msg['id'], body={'username': msg['username'], 'first_name': msg['first_name'], 'subscribed_to': [], '1': True, '3': False, '7': True, '30': True, '90': True, '180': True, '365': True })
+        print(res['created'])
+        now_epoch = datetime.datetime.now().strftime("%s")+"000"
+        res = es.index(index="ourusers", doc_type="last_updated", id=msg['id'], body={'date1': now_epoch, 'date3': now_epoch, 'date7': now_epoch, 'date30': now_epoch, 'date90': now_epoch, 'date180': now_epoch, 'date365': now_epoch})
         print(res['created'])
 
     def add_iguser(self,iguser):
@@ -56,7 +119,7 @@ class InstagramStatsBot(telepot.helper.ChatHandler):
 
     def on_chat_message(self, msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
-        print("HOLAAAAA")
+#        print("HOLAAAAA")
 #        print(json.dumps(telepot.glance(msg),indent=4))
 #        print('Chat Message:', content_type, chat_type, chat_id,msg)
         print(json.dumps(msg, indent=4))
@@ -82,8 +145,6 @@ class InstagramStatsBot(telepot.helper.ChatHandler):
                 self.sender.sendMessage(message, reply_markup=ReplyKeyboardMarkup( keyboard=[
                                        [KeyboardButton(text="Sí! quiero suscribirme!")], [KeyboardButton(text="No, gracias, no me interesa")]
                                         ], one_time_keyboard=True))
- #       if msg['text'] == '/keyout':
- #           bot.sendMessage(chat_id, 'escondiendo', reply_markup=hide_keyboard)
             elif msg['text'] == "No, gracias, no me interesa":
                 self.sender.sendMessage("¿Entonces para que me despiertas? 🙄 \nEs broma, no hay ningún problema 😊 Si en algún momento cambias de opinión, vuelve a usar el comando /start. Un saludo!",reply_markup=ReplyKeyboardHide())
             elif msg['text'] == "Sí! quiero suscribirme!":
@@ -97,24 +158,36 @@ class InstagramStatsBot(telepot.helper.ChatHandler):
                 self.sender.sendMessage("¡Si que cambias de opinión rápido! 😁 Ok, cancelando...",reply_markup=ReplyKeyboardHide())
             elif msg['text'].rsplit(' ',1)[0] == "Sí, quiero seguir a":
                 iguser = msg['text'].split()[-1]
-                self.sender.sendMessage("Ok, aún no sirve de nada, pero cuando siga programando te suscribiré a " + iguser)
+                #self.sender.sendMessage("Ok, aún no sirve de nada, pero cuando siga programando te suscribiré a " + iguser)
                 self.user_subscription(iguser, msg['from']['id'])
+                #self.set_regularity(msg['from']['id'])
             elif msg['text'].split()[0] == "/subscribe":
                 if len(msg['text'].split()) == 1:
                     self.sender.sendMessage("¿A qué usuario de instagram quieres seguir?",reply_markup=ForceReply())
                 else:
-                    self.sender.sendMessage("Confirmas que este el usuario al que quieres seguir? https://www.instagram.com/" + msg['text'].split()[1], 
+                    self.sender.sendMessage("Confirmas que éste el usuario al que quieres seguir? https://www.instagram.com/" + msg['text'].split()[1], 
                                              reply_markup=ReplyKeyboardMarkup( keyboard=[
                                                   [KeyboardButton(text="Sí, quiero seguir a "+ msg['text'].split()[1]), KeyboardButton(text="No, me he equivocado de usuario")],
                                                   [KeyboardButton(text="Ya no quiero seguir a nadie. Cancelar")]
                                                                              ], one_time_keyboard=True))
-            elif msg['text'] == '/settings':
+            elif msg['text'] == '/settingsraw':
                 res = es.get(index="ourusers", doc_type="users", id=msg['from']['id'])
-                self.sender.sendMessage("Lo que se de ti es " + str(res['_source']))
+                res2 = es.get(index="ourusers", doc_type="last_updated", id=msg['from']['id'])
+                self.sender.sendMessage("Lo que se de ti es " + str(res['_source']) + str (res2['_source']))
+            elif msg['text'] == '/settings':
+                self.show_current_settings(msg['from']['id'])   
+            elif msg['text'] in ['1','3','7','30','90','180','365']:
+                #self.sender.sendMessage("Cambiando la config de " + msg['text'] + " días.")
+                self.change_regularity(msg['text'], msg['from']['id'])
+            elif msg['text'] == "No quiero cambiar ninguno, están todos bien":
+                self.sender.sendMessage("Perfecto! Gracias 😊",reply_markup=ReplyKeyboardHide())
+            elif msg['text'] == '/reg':
+                self.show_last_notified(msg['from']['id'])
 
     def on_close(self, exception):
-        if isinstance(exception, telepot.exception.WaitTooLong):
-            self.sender.sendMessage('Me ignoras? A la mierda',reply_markup=ReplyKeyboardHide())
+        pass
+#        if isinstance(exception, telepot.exception.WaitTooLong):
+#            self.sender.sendMessage('Me ignoras? A la mierda',reply_markup=ReplyKeyboardHide())
 
     
 bot = telepot.DelegatorBot(BOT_TOKEN, [
@@ -122,3 +195,4 @@ bot = telepot.DelegatorBot(BOT_TOKEN, [
 ])
 
 bot.message_loop(run_forever='Listening ...')
+ 
