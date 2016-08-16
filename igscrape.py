@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup as bs
 import json
+import time
 
 def get_iguser_data(iguser, max_cursor=1, max_id=""):
     cursor=0
@@ -13,12 +14,14 @@ def get_iguser_data(iguser, max_cursor=1, max_id=""):
                 if cursor == 0:
                     data = json.loads(script.text[20:-1])
                 else:
-                    data['entry_data']['ProfilePage'][0]['user']['media']['nodes'].append(json.loads(script.text[20:-1])['entry_data']['ProfilePage'][0]['user']['media']['nodes'])
+                    data['entry_data']['ProfilePage'][0]['user']['media']['nodes'] += json.loads(script.text[20:-1])['entry_data']['ProfilePage'][0]['user']['media']['nodes']
         if data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['has_next_page'] == True:
             max_id = "?max_id=" +data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['end_cursor']
             cursor+=1
         else:
             break
+        print(str(cursor), end=" ", flush=True)
+        time.sleep(1)
     return data , max_id
 
 if __name__ == "__main__":

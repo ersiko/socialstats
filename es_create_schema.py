@@ -85,17 +85,54 @@ ourusers_settings = {
                 "email": {
                     "type": "string"
                 },
-                "daily": {
+                "1": {
                     "type": "boolean"
                 },
-                "weekly": {
+                "3": {
                     "type": "boolean"
                 },
-                "monthly": {
+                "7": {
+                    "type": "boolean"
+                },
+                "30": {
+                    "type": "boolean"
+                },
+                "90": {
+                    "type": "boolean"
+                },
+                "180": {
+                    "type": "boolean"
+                },
+                "365": {
                     "type": "boolean"
                 },
                 "subscribed_to": {
                     "type": "string"
+                }
+            }
+        },
+        "last_updated": {
+            "properties": {
+                "date1": {
+                    "type": "date"
+                },
+                "date3": {
+                    "type": "date"
+                },
+                "date7": {
+                    "type": "date"
+                },
+                "date30": {
+                    "type": "date"
+                },
+                "date90": {
+                    "type": "date"
+                },
+                "date180": {
+                    "type": "date"
+                },
+                "date365": {
+                    "type": "date"
                 }
             }
         }
@@ -189,6 +226,9 @@ picsdaily_settings = {
             "properties": {
                 "number": {
                     "type": "integer"
+                },
+                "timestamp": {
+                    "type": "date"
                 }
             }
         }
