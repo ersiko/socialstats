@@ -126,3 +126,6 @@ for iguser in res['hits']['hits']:
 #        else:
 #            print("Skipping that shit")
 #    print(json.dumps(data, indent=4))
+
+snapshot=elasticsearch.client.SnapshotClient(es)
+res = snapshot.create('instagramstats_backup',index_suffix_today)
