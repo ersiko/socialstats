@@ -25,13 +25,11 @@ def create_snapshot(es):
 
 def update_index_aliases(es):
     for my_range in ['1','3','7','30','90','180','365']:
-        my_date=(date.today()-timedelta(days=int(my_range))).strftime("%Y%m%d")
+        my_date=(date.today()-timedelta(days=int(my_range)+1)).strftime("%Y%m%d")
         for my_index in ['pics', 'user']:
-            es.indices.put_alias(my_index+"daily-"+index_suffix_today,my_index+"daily-last-" + my_range + "-days")
+            es.indices.put_alias(my_index+"daily-"+index_suffix_today, my_index+"daily-last-" + my_range + "-days")
             if es.indices.exists_alias(my_index+"daily-"+my_date , my_index+"daily-last-" + my_range + "-days"):
-                print('es.indices.delete_alias('+my_index+'"daily-"'+my_date , my_index+'"daily-last-"' + my_range + '"-days")')
                 es.indices.delete_alias(my_index+"daily-"+my_date , my_index+"daily-last-" + my_range + "-days")
-                print("hola3")
 
 
 res=es.search(index='igusers',doc_type='users')
