@@ -36,16 +36,16 @@ for user in res['hits']['hits']:
             days_ago = datetime.datetime.now() - datetime.datetime.fromtimestamp(timestamp)
             if days_ago.days >= int(regularity):
                 print("Toca enviarle el de los " + str(regularity) + " días.")
-                following=es.get(index="igusers",doc_type="following_diffs", id=iguser)['_source']['1']
-                followers=es.get(index="igusers",doc_type="followers_diffs", id=iguser)['_source']['1']
-                for pic in es.search(index='pics', doc_type='likes_diffs', q="igusername:"+iguser, sort='1:desc', size='5')['hits']['hits']:
+                following=es.get(index="igusers",doc_type="following_diffs", id=iguser)['_source'][str(regularity)]
+                followers=es.get(index="igusers",doc_type="followers_diffs", id=iguser)['_source'][str(regularity)]
+                for pic in es.search(index='pics', doc_type='likes_diffs', q="igusername:"+iguser, sort=str(regularity)+':desc', size='5')['hits']['hits']:
                     if pic['_source']['1'] > 0:
                         total = es.get(index='picsdaily-'+ index_suffix,doc_type='likes',id=pic['_id'])['_source']['number']
                         caption=es.get(index='pics', doc_type='pics', id=pic['_id'])['_source']['caption']
                         message=message + "\n'[" + ' '.join(caption[:30].splitlines()) + "...](https://instagram.com/p/"+ pic['_id'] +   \
                               ")' ganó *" + str(pic['_source']['1']) + "* likes (en total *" + str(total) +"*)\n"
                 if message != "":
-                    message = "Veamos tus likes de hoy!\n" + message
+                    message = "Veamos tus likes de los ultimos "+ regularity +" dias!\n" + message
 
                 if following != 0 or followers != 0:
                     message = message + "\nDiferencia de seguidores: " + str(followers) + ". Diferencia de seguidos: " + str(following)
