@@ -92,18 +92,22 @@ class InstagramStatsBot(telepot.helper.ChatHandler):
         #self.sender.sendMessage('suscribiendo ... iguser' + iguser + " y tgid " + str(telegram_id)) 
         self.add_iguser(iguser)
 
-        if es.exists(index="ourusers", doc_type="users", id=telegram_id):
-            try:
-                subscribed_to = es.get(index="ourusers", doc_type="users", id=telegram_id, fields='subscribed_to')['fields']['subscribed_to']
-            except KeyError:
-                subscribed_to = []
-
-        if iguser not in subscribed_to:
-            subscribed_to.append(iguser)
-            res = es.update(index="ourusers", doc_type="users", id=telegram_id, body={'doc' :{'subscribed_to': subscribed_to}})
-            self.sender.sendMessage('Ok, ahora recibirás estadísticas del usuario ' + iguser)
-        else:
+        body = {"script":{"inline": "ctx._source.subscribed_to.contains(newuser) ? (ctx.op = 'none'):(ctx._source.subscribed_to += newuser)", "params": {"newuser":iguser} }}
+        updated = es.update(index="ourusers", doc_type="users", id=telegram_id, body=body)
+        if updated['_shards']['successful'] == 0:
             self.sender.sendMessage('Ya estás suscrito a ' + iguser)
+        else:
+            self.sender.sendMessage('Ok, ahora recibirás estadísticas del usuario ' + iguser, reply_markup=ReplyKeyboardHide())
+
+    def user_unsubscription(self, iguser, telegram_id):
+        #self.sender.sendMessage('suscribiendo ... iguser' + iguser + " y tgid " + str(telegram_id)) 
+        body = {"script":{"inline": "ctx._source.subscribed_to.contains(newuser) ? (ctx._source.subscribed_to -= newuser):(ctx.op = 'none')", "params": {"newuser":iguser} }}
+        updated = es.update(index="ourusers", doc_type="users", id=telegram_id, body=body)
+        if updated['_shards']['successful'] == 0:
+            self.sender.sendMessage('No estabas suscrito a ' + iguser)
+        else:
+            self.sender.sendMessage('Ok, ya no recibirás estadísticas del usuario ' + iguser, reply_markup=ReplyKeyboardHide())
+
 
     def user_creation(self,msg):
         res = es.index(index="ourusers", doc_type="users", id=msg['id'], body={'username': msg['username'], 'first_name': msg['first_name'], 'subscribed_to': [], '1': True, '3': False, '7': True, '30': True, '90': True, '180': True, '365': True })
@@ -142,6 +146,44 @@ class InstagramStatsBot(telepot.helper.ChatHandler):
                 self.sender.sendMessage("Dice instagram que el usuario "+ user_to_subscribe + " no existe... Vuelve a intentarlo.")
                 self.sender.sendMessage("¿A qué usuario de instagram quieres seguir?",reply_markup=ForceReply())
 
+    def show_unsubscribe_dialog(self,msg):
+        if msg['text'].split()[0] == "/unsubscribe" and len(msg['text'].split()) == 1:
+            self.sender.sendMessage("¿A qué usuario de instagram quieres dejar de seguir?",reply_markup=ForceReply())
+            res = es.get(index="ourusers", doc_type="users", id=msg['from']['id'])
+            keyboard=[]
+            i=0
+            j=0
+            for user in res['_source']['subscribed_to']:
+                if i == 0:
+                    keyboard.append([])
+                if i < 3:
+                    i += 1
+                else:
+                    i = 0
+                    j += 1
+                    keyboard.append([])
+                keyboard[j].append(KeyboardButton(text="Quitar "+ user))
+            keyboard.append([KeyboardButton(text="Ya no quiero dejar de seguir a nadie. Cancelar")])
+            self.sender.sendMessage("¿Confirmas que éste es el usuario al que quieres dejar de seguir? https://www.instagram.com/" + user, 
+                                         reply_markup=ReplyKeyboardMarkup( keyboard=keyboard, one_time_keyboard=True))
+        else:
+            if msg['text'].split()[0] == "/unsubscribe":
+                user_to_unsubscribe = msg['text'].split()[1].lower()
+            else:
+                user_to_unsubscribe = msg['text'].split()[0].lower()
+            user_to_unsubscribe = self.sanitize(user_to_unsubscribe)
+            req = requests.get("https://www.instagram.com/" + user_to_unsubscribe + "/")
+            if req.status_code == 200:
+                self.sender.sendMessage("¿Confirmas que éste es el usuario al que quieres dejar de seguir? https://www.instagram.com/" + user_to_unsubscribe, 
+                                         reply_markup=ReplyKeyboardMarkup( keyboard=[
+                                              [KeyboardButton(text="Sí, ya no quiero seguir a "+ user_to_unsubscribe), KeyboardButton(text="No, me he equivocado de usuario")],
+                                              [KeyboardButton(text="Ya no quiero dejar de seguir a nadie. Cancelar")]
+                                         ], one_time_keyboard=True))
+            else:
+                self.sender.sendMessage("Dice instagram que el usuario "+ user_to_unsubscribe + " no existe... Vuelve a intentarlo.")
+                self.sender.sendMessage("¿A qué usuario de instagram quieres  dejar de seguir?",reply_markup=ForceReply())
+
+
     def on_chat_message(self, msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
 #        print("HOLAAAAA")
@@ -158,6 +200,8 @@ class InstagramStatsBot(telepot.helper.ChatHandler):
             if is_reply == True:
                 if msg['reply_to_message']['text'] == "¿A qué usuario de instagram quieres seguir?":
                     self.show_subscribe_dialog(msg)
+                if msg['reply_to_message']['text'] == "¿A qué usuario de instagram quieres dejar de seguir?":
+                    self.show_unsubscribe_dialog(msg)
 
             elif msg['text'] == '/start':
                 print("hola")
@@ -181,15 +225,21 @@ class InstagramStatsBot(telepot.helper.ChatHandler):
                 self.sender.sendMessage("Hay taaaantos usuarios en instagram... A ver, vuelve a intentarlo.")
                 self.sender.sendMessage("¿A qué usuario de instagram quieres seguir?",reply_markup=ForceReply())
 
-            elif msg['text'] == "Ya no quiero seguir a nadie. Cancelar":
+            elif msg['text'] == "Ya no quiero seguir a nadie. Cancelar" or msg['text'] == "Ya no quiero dejar de seguir a nadie. Cancelar":
                 self.sender.sendMessage("¡Si que cambias de opinión rápido! 😁 Ok, cancelando...",reply_markup=ReplyKeyboardHide())
 
             elif msg['text'].rsplit(' ',1)[0] == "Sí, quiero seguir a":
                 user_to_subscribe = self.sanitize(msg['text'].split()[-1].lower())
                 self.user_subscription(user_to_subscribe, msg['from']['id'])
 
+            elif msg['text'].rsplit(' ',1)[0] == "Sí, ya no quiero seguir a" or msg['text'].rsplit(' ',1)[0] == "Quitar":
+                user_to_unsubscribe = self.sanitize(msg['text'].split()[-1].lower())
+                self.user_unsubscription(user_to_unsubscribe, msg['from']['id'])
+
             elif msg['text'].split()[0] == "/subscribe":
                 self.show_subscribe_dialog(msg)
+            elif msg['text'].split()[0] == "/unsubscribe":
+                self.show_unsubscribe_dialog(msg)
 
             elif msg['text'] == '/settingsraw':
                 res = es.get(index="ourusers", doc_type="users", id=msg['from']['id'])
