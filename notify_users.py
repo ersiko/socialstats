@@ -27,39 +27,37 @@ for user in res['hits']['hits']:
     doc={}
     telegram_id=user['_id']
     for iguser in user['_source']['subscribed_to']:
-        message = ""
         print("El usuario " + user['_source']['username'] + " sigue a " + iguser)
         last_notified = es.get(index='ourusers', doc_type='last_updated', id=telegram_id)
         for regularity in ['1','3','7','30','90','180','365']:
-            timestamp = int(last_notified['_source']['date'+regularity])/1000
-            last_updated = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
-            days_ago = datetime.datetime.now() - datetime.datetime.fromtimestamp(timestamp)
-            if days_ago.days >= int(regularity):
-                print("Toca enviarle el de los " + str(regularity) + " días.")
-                following=es.get(index="igusers",doc_type="following_diffs", id=iguser)['_source'][str(regularity)]
-                followers=es.get(index="igusers",doc_type="followers_diffs", id=iguser)['_source'][str(regularity)]
-                for pic in es.search(index='pics', doc_type='likes_diffs', q="igusername:"+iguser, sort=str(regularity)+':desc', size='5')['hits']['hits']:
-                    if pic['_source']['1'] > 0:
-                        total = es.get(index='picsdaily-'+ index_suffix,doc_type='likes',id=pic['_id'])['_source']['number']
-                        caption=es.get(index='pics', doc_type='pics', id=pic['_id'])['_source']['caption']
-                        message=message + "\n'[" + ' '.join(caption[:30].splitlines()) + "...](https://instagram.com/p/"+ pic['_id'] +   \
-                              ")' ganó *" + str(pic['_source']['1']) + "* likes (en total *" + str(total) +"*)\n"
-                if message != "":
-                    message = "Veamos tus likes de los ultimos "+ regularity +" dias!\n" + message
-
-                if following != 0 or followers != 0:
-                    message = message + "\nDiferencia de seguidores: " + str(followers) + ". Diferencia de seguidos: " + str(following)
-                if message != "":
-                    bot.sendMessage(telegram_id,message,parse_mode='Markdown')
-                date="date"+regularity
-                doc[date] = timestamp_today
-            else:
-                print("Han pasado solo " + str(days_ago) + " días, aún falta para los " + str(regularity))
-
-    print(str(doc))
-    if doc != {}:
-        print("Actualizando last_udpated")
-        res = es.update(index="ourusers", doc_type="last_updated", id=telegram_id, body={"doc": doc,'doc_as_upsert':True})
+            if iguser['_source'][regularity]:
+                message = ""
+                timestamp = int(last_notified['_source']['date'+regularity])/1000
+                last_updated = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
+                days_ago = datetime.datetime.now() - datetime.datetime.fromtimestamp(timestamp)
+                if days_ago.days >= int(regularity):
+                    print("Toca enviarle el de los " + str(regularity) + " días.")
+                    following=es.get(index="igusers",doc_type="following_diffs", id=iguser)['_source'][str(regularity)]
+                    followers=es.get(index="igusers",doc_type="followers_diffs", id=iguser)['_source'][str(regularity)]
+                    for pic in es.search(index='pics', doc_type='likes_diffs', q="igusername:"+iguser, sort=str(regularity)+':desc', size='5')['hits']['hits']:
+                        if pic['_source']['1'] > 0:
+                            total = es.get(index='picsdaily-'+ index_suffix,doc_type='likes',id=pic['_id'])['_source']['number']
+                            caption=es.get(index='pics', doc_type='pics', id=pic['_id'])['_source']['caption']
+                            message=message + "\n'[" + ' '.join(caption[:30].splitlines()) + "...](https://instagram.com/p/"+ pic['_id'] +   \
+                                  ")' ganó *" + str(pic['_source']['1']) + "* likes (en total *" + str(total) +"*)\n"
+                    if following != 0 or followers != 0:
+                        message = message + "\nDiferencia de seguidores: " + str(followers) + ". Diferencia de seguidos: " + str(following)
+                    if message != "":
+                        message = "Veamos tu actividad de los ultimos "+ regularity +" dias!\n" + message
+                        bot.sendMessage(telegram_id,message,parse_mode='Markdown')
+                    date="date"+regularity
+                    doc[date] = timestamp_today
+                else:
+                    print("Han pasado solo " + str(days_ago) + " días, aún falta para los " + str(regularity))
+        print(str(doc))
+        if doc != {}:
+            print("Actualizando last_udpated")
+            res = es.update(index="ourusers", doc_type="last_updated", id=telegram_id, body={"doc": doc,'doc_as_upsert':True})
 
 
 ##############################################################################
