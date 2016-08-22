@@ -30,7 +30,7 @@ for user in res['hits']['hits']:
         print("El usuario " + user['_source']['username'] + " sigue a " + iguser)
         last_notified = es.get(index='ourusers', doc_type='last_updated', id=telegram_id)
         for regularity in ['1','3','7','30','90','180','365']:
-            if iguser['_source'][regularity]:
+            if user['_source'][regularity]:
                 message = ""
                 timestamp = int(last_notified['_source']['date'+regularity])/1000
                 last_updated = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
