@@ -50,14 +50,18 @@ for user in res['hits']['hits']:
                     if message != "":
                         message = "Veamos tu actividad de los ultimos "+ regularity +" dias!\n" + message
                         bot.sendMessage(telegram_id,message,parse_mode='Markdown')
+                        print(message)
+                    else:
+                        print("El mensaje estaba vacío!")
                     date="date"+regularity
                     doc[date] = timestamp_today
                 else:
-                    print("Han pasado solo " + str(days_ago) + " días, aún falta para los " + str(regularity))
+                    #print("Han pasado solo " + str(days_ago) + " días, aún falta para los " + str(regularity))
+                    pass
         print(str(doc))
         if doc != {}:
             print("Actualizando last_udpated")
-            res = es.update(index="ourusers", doc_type="last_updated", id=telegram_id, body={"doc": doc,'doc_as_upsert':True})
+            #res = es.update(index="ourusers", doc_type="last_updated", id=telegram_id, body={"doc": doc,'doc_as_upsert':True})
 
 
 ##############################################################################
