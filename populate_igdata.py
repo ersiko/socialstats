@@ -142,6 +142,6 @@ for iguser in res['hits']['hits']:
     update_todays_pics_likes(es,data,iguser['_id'])
     update_user_counters(es,iguser)
 
-#create_snapshot(es)
+create_snapshot(es)
 
 print(str(time.time()-start))
