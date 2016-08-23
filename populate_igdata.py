@@ -73,11 +73,13 @@ def update_todays_follows(es,data,iguser):
     print("Le voy a poner al usuario" + iguser['_id'] + " " + str(followers) + " followers y " + str(following) + " following")
     es.index(index='userdaily-'+index_suffix_today,doc_type='follows', id=iguser['_id'],body={'followers':followers, 'following': following, 'timestamp': timestamp_today})
 
-def add_pic(es,pic):
+def add_pic(es,pic,igusername):
     dateposted = pic['date']*1000
     thumbnail = pic['thumbnail_src']
     fullpic = pic['display_src']
     caption = pic['caption']
+    pic_id = pic['code']
+    likes = pic['likes']['count']
     print("Username " + igusername + " posted pic "+ pic_id + " on " + str(dateposted) + 
           " and it has " + str(likes) + " likes. You can see a thumbnail at " + thumbnail + 
           " and the full pic at " + fullpic + ". The caption is " + caption)
@@ -93,12 +95,12 @@ def add_pic(es,pic):
     es.index(index='picsdaily-' +index_suffix_today,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_today})
 
 
-def update_pics_likes(es,data):
+def update_pics_likes(es,data,igusername):
     for pic in data['entry_data']['ProfilePage'][0]['user']['media']['nodes']:
         pic_id = pic['code']
         likes = pic['likes']['count']
         if not es.exists(index="pics", doc_type="pics", id=pic_id):
-            add_pic(es,pic)
+            add_pic(es,pic,igusername)
         else:
         #    print("La foto " + pic_id + " ya está en elasticsearch")
             days=0
@@ -129,7 +131,7 @@ for iguser in res['hits']['hits']:
     data, maxid = igscrape.get_iguser_data(iguser['_id'], 10)
     update_todays_follows(es,data,iguser)
     update_user_counters(es,iguser)
-    update_pics_likes(es,data)
+    update_pics_likes(es,data,iguser['_id'])
 
 create_snapshot(es)
 update_index_aliases(es)
