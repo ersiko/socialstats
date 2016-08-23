@@ -61,7 +61,7 @@ for user in res['hits']['hits']:
         print(str(doc))
         if doc != {}:
             print("Actualizando last_udpated")
-            #res = es.update(index="ourusers", doc_type="last_updated", id=telegram_id, body={"doc": doc,'doc_as_upsert':True})
+            res = es.update(index="ourusers", doc_type="last_updated", id=telegram_id, body={"doc": doc,'doc_as_upsert':True})
 
 
 ##############################################################################
