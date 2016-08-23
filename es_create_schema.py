@@ -198,7 +198,9 @@ es.indices.create(index ="pics", body=pics_settings)
 userdaily_settings = {
     "template": "userdaily-*",
     "settings" : {
-        "number_of_replicas": 0
+        "number_of_replicas": 0,
+        "number_of_shards" : 1
+
     },
     "mappings": {
         "follows": {
@@ -208,7 +210,10 @@ userdaily_settings = {
                 },
                 "following": {
                     "type": "integer"
-                }
+                },
+                "timestamp": {
+                    "type": "date"
+                }                
             }
         }
     }
@@ -219,7 +224,8 @@ es.indices.put_template("userdaily", body = userdaily_settings)
 picsdaily_settings = {
     "template": "picsdaily-*",
     "settings" : {
-        "number_of_replicas": 0
+        "number_of_replicas": 0,
+        "number_of_shards" : 1
     },
     "mappings": {
         "likes": {
