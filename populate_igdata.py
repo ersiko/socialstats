@@ -29,7 +29,6 @@ def create_snapshot(es):
 
 def update_index_aliases(es):
     for my_range in ['1','3','7','30','90','180','365']:
-    #for my_range in ['1']:
         my_date=(date.today()-timedelta(days=int(my_range)+1)).strftime("%Y%m%d")
         for my_index in ['pics', 'user']:
             print("Voy a añadir el indice "+my_index+"daily-"+index_suffix_today+" al indice "+my_index+"daily-last-" + my_range + "-days")
@@ -61,7 +60,7 @@ def update_pic_counters(es, pic,igusername):
     my_likes_update = {}
     my_likes_update['igusername'] = igusername
     for period in ['1','3','7','30','90','180','365']:
-        my_likes=es.search(index="picsdaily-last-" + period + "-days",doc_type="likes",q="_id:"+pic_id)['hits']['hits']
+        my_likes=es.search(index="picsdaily-last-" + period + "-days",doc_type="likes",body={"query": { "match": { "_id":pic_id}}})['hits']['hits']
 #        print("Likes: "+str(my_likes))
         if len(my_likes) == 1 or len(my_likes) == 0:
             # La foto es vieja y se acaba de anadir. No tenemos datos de ayer. Manana podremos calcular.
@@ -113,7 +112,8 @@ def update_todays_pics_likes(es,data,igusername):
         #    print("La foto " + pic_id + " ya está en elasticsearch")
             days=0
             index_daily=(date.today()-timedelta(days=days)).strftime("%Y%m%d")
-            if es.search(index="picsdaily-*", doc_type='likes', q="_id:"+pic_id, size=0)['hits']['total'] == 0:
+
+            if es.search(index="picsdaily-*", doc_type='likes', body={"query": { "match": { "_id":pic_id}}}, size=0)['hits']['total'] == 0:
                 result = es.index(index='picsdaily-' +index_daily,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_daily})
             else: 
                 while not es.exists(index="picsdaily-"+index_daily, doc_type='likes', id=pic_id):
