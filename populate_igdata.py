@@ -58,7 +58,6 @@ def update_pic_counters(es, pic,igusername):
     pic_id = pic['code']
     #print("Foto: " +pic_id)
     my_likes_update = {}
-    my_likes_update['igusername'] = igusername
     for period in ['1','3','7','30','90','180','365']:
         my_likes=es.search(index="picsdaily-last-" + period + "-days",doc_type="likes",body={"query": { "match": { "_id":pic_id}}})['hits']['hits']
 #        print("Likes: "+str(my_likes))
@@ -67,8 +66,10 @@ def update_pic_counters(es, pic,igusername):
             break
         else:
             my_likes_update[period] = my_likes[-1]['_source']['number'] - my_likes[0]['_source']['number']
-    print("Le voy a poner a la foto " + pic_id + " el dict " + str(my_likes_update))
-    update = es.update(index='pics', doc_type='likes_diffs', id=pic_id, body={"doc":my_likes_update,'doc_as_upsert':'true'})
+    if my_likes_update != {}:
+        my_likes_update['igusername'] = igusername
+        print("Le voy a poner a la foto " + pic_id + " el dict " + str(my_likes_update))
+        update = es.update(index='pics', doc_type='likes_diffs', id=pic_id, body={"doc":my_likes_update,'doc_as_upsert':'true'})
     #print(update)
 
 def update_todays_user_follows(es,data,iguser):
@@ -92,11 +93,11 @@ def add_pic(es,pic,igusername):
     es.index(index='pics', doc_type='pics', id=pic_id, body=pic_object)
     if dateposted > int(timestamp_yesterday):
         print("Es una foto que se acaba de publicar. Le pongo 0 likes el dia anterior")
-        es.index(index='picsdaily-' +index_suffix_yesterday,doc_type='likes', id=pic_id,body={'number':0, 'timestamp': timestamp_yesterday})
+        es.index(index='picsdaily-' +index_suffix_yesterday,doc_type='likes', id=pic_id,body={'number':0, 'timestamp': timestamp_yesterday, 'iguser': igusername})
     else: 
         print("Es una foto antigua que se acaba de importar. Dejo los likes anteriores como 'indeterminados'")
     print("Y ahora le pong a la foto "+pic_id+" " +str(likes) + " likes para el dia de hoy")
-    es.index(index='picsdaily-' +index_suffix_today,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_today})
+    es.index(index='picsdaily-' +index_suffix_today,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_today, 'iguser': igusername})
 
 
 def update_todays_pics_likes(es,data,igusername):
@@ -114,12 +115,12 @@ def update_todays_pics_likes(es,data,igusername):
             index_daily=(date.today()-timedelta(days=days)).strftime("%Y%m%d")
 
             if es.search(index="picsdaily-*", doc_type='likes', body={"query": { "match": { "_id":pic_id}}}, size=0)['hits']['total'] == 0:
-                result = es.index(index='picsdaily-' +index_daily,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_daily})
+                result = es.index(index='picsdaily-' +index_daily,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_daily, 'iguser': igusername})
             else: 
                 while not es.exists(index="picsdaily-"+index_daily, doc_type='likes', id=pic_id):
                     timestamp_daily = (date.today()-timedelta(days=days)).strftime("%s")+"000"
                     print("Dias = "+str(days)+" . Le pongo " + str(likes) + " likes a la foto " + str(pic_id))
-                    result = es.index(index='picsdaily-' +index_daily,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_daily})
+                    result = es.index(index='picsdaily-' +index_daily,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_daily, 'iguser': igusername})
                     days+=1
                     index_daily=(date.today()-timedelta(days=days)).strftime("%Y%m%d")
         update_pic_counters(es, pic,igusername)
