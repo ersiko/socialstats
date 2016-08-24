@@ -40,11 +40,12 @@ for user in res['hits']['hits']:
                     following=es.get(index="igusers",doc_type="following_diffs", id=iguser)['_source'][str(regularity)]
                     followers=es.get(index="igusers",doc_type="followers_diffs", id=iguser)['_source'][str(regularity)]
                     for pic in es.search(index='pics', doc_type='likes_diffs', q="igusername:"+iguser, sort=str(regularity)+':desc', size='5')['hits']['hits']:
-                        if pic['_source']['1'] > 0:
+                        print(pic)
+                        if pic['_source'][regularity] > 0:
                             total = es.get(index='picsdaily-'+ index_suffix,doc_type='likes',id=pic['_id'])['_source']['number']
                             caption=es.get(index='pics', doc_type='pics', id=pic['_id'])['_source']['caption']
                             message=message + "\n'[" + ' '.join(caption[:30].splitlines()) + "...](https://instagram.com/p/"+ pic['_id'] +   \
-                                  ")' ganó *" + str(pic['_source']['1']) + "* likes (en total *" + str(total) +"*)\n"
+                                  ")' ganó *" + str(pic['_source'][regularity]) + "* likes (en total *" + str(total) +"*)\n"
                     if following != 0 or followers != 0:
                         message = message + "\nDiferencia de seguidores: " + str(followers) + ". Diferencia de seguidos: " + str(following)
                     if message != "":
@@ -58,10 +59,10 @@ for user in res['hits']['hits']:
                 else:
                     #print("Han pasado solo " + str(days_ago) + " días, aún falta para los " + str(regularity))
                     pass
-        print(str(doc))
-        if doc != {}:
-            print("Actualizando last_udpated")
-            res = es.update(index="ourusers", doc_type="last_updated", id=telegram_id, body={"doc": doc,'doc_as_upsert':True})
+        #print(str(doc))
+    if doc != {}:
+        print("Actualizando last_udpated")
+        res = es.update(index="ourusers", doc_type="last_updated", id=telegram_id, body={"doc": doc,'doc_as_upsert':'true'})
 
 
 ##############################################################################
