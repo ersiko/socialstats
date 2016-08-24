@@ -13,10 +13,15 @@ def get_iguser_data(iguser, max_cursor=1, max_id=""):
             if 'window._sharedData' in script.text:
                 if cursor == 0:
                     data = json.loads(script.text[20:-1])
+                    page_info = data['entry_data']['ProfilePage'][0]['user']['media']['page_info']
                 else:
-                    data['entry_data']['ProfilePage'][0]['user']['media']['nodes'] += json.loads(script.text[20:-1])['entry_data']['ProfilePage'][0]['user']['media']['nodes']
+                    print("entrmos en el else")
+                    data2 = json.loads(script.text[20:-1])
+                    data['entry_data']['ProfilePage'][0]['user']['media']['nodes'] += data2['entry_data']['ProfilePage'][0]['user']['media']['nodes']
+                    page_info = data2['entry_data']['ProfilePage'][0]['user']['media']['page_info']          
         if data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['has_next_page'] == True:
-            max_id = "?max_id=" +data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['end_cursor']
+            print("Otras páginas ")
+            max_id = "?max_id=" +page_info['end_cursor']
             cursor+=1
         else:
             break
