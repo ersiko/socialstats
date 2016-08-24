@@ -15,12 +15,10 @@ def get_iguser_data(iguser, max_cursor=1, max_id=""):
                     data = json.loads(script.text[20:-1])
                     page_info = data['entry_data']['ProfilePage'][0]['user']['media']['page_info']
                 else:
-                    print("entrmos en el else")
                     data2 = json.loads(script.text[20:-1])
                     data['entry_data']['ProfilePage'][0]['user']['media']['nodes'] += data2['entry_data']['ProfilePage'][0]['user']['media']['nodes']
                     page_info = data2['entry_data']['ProfilePage'][0]['user']['media']['page_info']          
         if data['entry_data']['ProfilePage'][0]['user']['media']['page_info']['has_next_page'] == True:
-            print("Otras páginas ")
             max_id = "?max_id=" +page_info['end_cursor']
             cursor+=1
         else:
