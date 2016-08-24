@@ -134,6 +134,8 @@ index_suffix_yesterday=(date.today()-timedelta(days=1)).strftime("%Y%m%d")
 timestamp_today = date.today().strftime("%s")+"000"
 timestamp_yesterday = (date.today()-timedelta(days=1)).strftime("%s")+"000"
 
+es.index.create("picsdaily-"+suffix)
+es.index.create("userdaily-"+suffix)
 update_index_aliases(es)
 
 for iguser in res['hits']['hits']:
