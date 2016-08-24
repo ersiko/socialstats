@@ -70,7 +70,7 @@ def update_pic_counters(es, pic,igusername):
             my_likes_update[period] = my_likes[-1]['_source']['number'] - my_likes[0]['_source']['number']
     print("Le voy a poner a la foto " + pic_id + " el dict " + str(my_likes_update))
     update = es.update(index='pics', doc_type='likes_diffs', id=pic_id, body={"doc":my_likes_update,'doc_as_upsert':'true'})
-    print(update)
+    #print(update)
 
 def update_todays_user_follows(es,data,iguser):
     followers = data['entry_data']['ProfilePage'][0]['user']['followed_by']['count']
@@ -133,11 +133,11 @@ index_suffix_yesterday=(date.today()-timedelta(days=1)).strftime("%Y%m%d")
 timestamp_today = date.today().strftime("%s")+"000"
 timestamp_yesterday = (date.today()-timedelta(days=1)).strftime("%s")+"000"
 
-#update_index_aliases(es)
+update_index_aliases(es)
 
 for iguser in res['hits']['hits']:
     print(iguser['_id'])
-    data, maxid = igscrape.get_iguser_data(iguser['_id'], 1)
+    data, maxid = igscrape.get_iguser_data(iguser['_id'], 10)
     update_todays_user_follows(es,data,iguser)
     update_todays_pics_likes(es,data,iguser['_id'])
     update_user_counters(es,iguser)
