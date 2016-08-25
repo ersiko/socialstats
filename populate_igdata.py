@@ -61,9 +61,8 @@ def update_pic_counters(es, pic,igusername):
         my_likes_update = {}
         for period in ['1','3','7','30','90','180','365']:
             my_likes=es.search(index="picsdaily-last-" + period + "-days",doc_type="likes",body={"query": { "match": { "_id":pic_id}}})['hits']['hits']
-            print("Likes: "+str(my_likes)+ " " + str(len(my_likes)))
+#            print("Likes: "+str(my_likes)+ " " + str(len(my_likes)))
             if len(my_likes) == 1 or len(my_likes) == 0:
-                print("me las piro de aquí")
                 # La foto es vieja y se acaba de anadir. No tenemos datos de ayer. Manana podremos calcular.
                 break
             else:
@@ -122,7 +121,7 @@ def update_todays_pics_likes(es,data,igusername):
             else: 
                 while not es.exists(index="picsdaily-"+index_daily, doc_type='likes', id=pic_id):
                     timestamp_daily = (date.today()-timedelta(days=days)).strftime("%s")+"000"
-                    print("Dias = "+str(days)+" . Le pongo " + str(likes) + " likes a la foto " + str(pic_id))
+                    #print("Dias = "+str(days)+" . Le pongo " + str(likes) + " likes a la foto " + str(pic_id))
                     result = es.index(index='picsdaily-' +index_daily,doc_type='likes', id=pic_id,body={'number':likes, 'timestamp': timestamp_daily, 'iguser': igusername})
                     days+=1
                     index_daily=(date.today()-timedelta(days=days)).strftime("%Y%m%d")
