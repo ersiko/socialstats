@@ -66,7 +66,7 @@ def update_pic_counters(es, pic,igusername):
                 # La foto es vieja y se acaba de anadir. No tenemos datos de ayer. Manana podremos calcular.
                 break
             else:
-                print("voy a calcular")
+#                print("voy a calcular")
                 my_likes_update[period] = my_likes[-1]['_source']['number'] - my_likes[0]['_source']['number']
         if my_likes_update != {}:
             my_likes_update['igusername'] = igusername

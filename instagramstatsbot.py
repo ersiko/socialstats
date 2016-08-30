@@ -9,6 +9,9 @@ import datetime
 import requests
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardHide, ForceReply
 from telepot.delegate import per_chat_id, create_open
+import logging
+
+logging.basicConfig(filename='instagramstatsbot.log',level=logging.INFO)
 
 config = configparser.ConfigParser()
 scriptdir= os.path.dirname(sys.argv[0])
@@ -191,6 +194,12 @@ class InstagramStatsBot(telepot.helper.ChatHandler):
 #        print('Chat Message:', content_type, chat_type, chat_id,msg)
         print(json.dumps(msg, indent=4))
         if content_type == 'text':
+            if chat_type == 'private':
+                logging.info(msg['from']['username'] + " " + str(msg['from']['id']) + ": " +msg['text'])
+            elif chat_type == 'group':
+                logging.info(msg['from']['username'] + " " + str(msg['from']['id']) + " in " + msg['chat']['title'] + " " + str(msg['chat']['id']) + ": "+ msg['text'])
+            else:
+                logging.info("Unknown chat_type for message + " + str(msg['message_id']) + " from "+ msg['from']['username'] + " " + str(msg['from']['id']) +": " + chat_type )
             try:
                 reply=msg['reply_to_message']
                 is_reply = True
@@ -258,6 +267,8 @@ class InstagramStatsBot(telepot.helper.ChatHandler):
 
             elif msg['text'] == '/reg':
                 self.show_last_notified(msg['from']['id'])
+        else:
+            logging.info("Unknown content_type message " + msg['message_id'] + " from "+ msg['from']['username'] + " " + msg['from']['id']+": " + content_type )
 
     def on_close(self, exception):
         pass
